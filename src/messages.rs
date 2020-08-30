@@ -1,6 +1,11 @@
-pub struct MessagesConfig {}
+use serde::{Deserialize, Serialize};
 
-pub fn load_config(config_path: &str) -> std::io::Result<MessagesConfig> {
-  Result::Ok(MessagesConfig {})
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Config {
+    pub message: String,
 }
 
+pub fn save_config(config: Config) {
+    let file = std::fs::File::create("config.json").unwrap();
+    serde_json::to_writer_pretty(file, &config);
+}
