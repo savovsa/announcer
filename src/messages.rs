@@ -6,11 +6,12 @@ pub struct Config<'a> {
     pub messages: Messages<'a>,
 }
 
+// The key is the audio file name
 type Messages<'a> = HashMap<&'a str, Message<'a>>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Message<'a> {
-    pub name: &'a str,
+    pub display_name: &'a str,
     pub volume: f32,
 }
 

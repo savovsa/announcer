@@ -1,12 +1,21 @@
-use std::collections::HashMap;
-
 mod messages;
 
+use messages::{save_config, Config, Message};
+
 fn main() {
-    let config = messages::Config {
+    let config = Config {
         audio_folder_path: "sounds/",
-        messages: HashMap::new(),
+        messages: [(
+            "sound.mp3",
+            Message {
+                display_name: "Sound 1",
+                volume: 60_f32,
+            },
+        )]
+        .iter()
+        .cloned()
+        .collect(),
     };
 
-    messages::save_config(config);
+    save_config(config);
 }
