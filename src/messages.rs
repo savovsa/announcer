@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-#[derive(Serialize, Deserialize)]
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub audio_folder_path: String,
     pub messages: Messages,
 }
 
-// The key is the audio file name
+/// The key is the audio file name
 type Messages = HashMap<String, Message>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -15,8 +16,8 @@ pub struct Message {
     pub volume: f32,
 }
 
-pub fn save_config(config: Config) {
-    let file = std::fs::File::create("config.json").unwrap();
+pub fn save_config(config: Config, path: &str) {
+    let file = std::fs::File::create(path).unwrap();
     serde_json::to_writer_pretty(file, &config).unwrap();
 }
 
