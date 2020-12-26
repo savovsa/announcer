@@ -23,7 +23,15 @@ pub fn save_config(config: Config, path: &str) {
 
 pub fn load_config(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
     let file = std::fs::File::open(path)?;
+
+    // There is a panic if this is uncommented
+    let contents = std::fs::read_to_string(path).expect("Something went wrong reading the file");
+    println!("{}", contents);
+
     let reader = std::io::BufReader::new(file);
+
+    // The panic happens here with the following error
+    // Error("EOF while parsing a value", line: 1, column: 0)
     let config: Config = serde_json::from_reader(reader)?;
     Ok(config)
 }
