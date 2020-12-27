@@ -1,9 +1,9 @@
 use announcer::messages::{load_config, save_config, Config, Message};
 use notify::{
-    event::ModifyKind, Error, Event, EventFn, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
+    event::{ModifyKind, DataChange}, Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, 
 };
 use std::sync::{Arc, Mutex};
-use tide::{http, Body, Response};
+use tide::{Body, Response};
 
 const CONFIG_PATH: &str = "config.json";
 
@@ -18,18 +18,14 @@ async fn main() -> tide::Result<()> {
         Watcher::new_immediate(move |result: Result<Event, Error>| {
             let event = result.unwrap();
 
-            if event.kind == EventKind::Modify(ModifyKind::Any) {
-                println!("Event {:?}", event.kind);
-                let mut config_guard = moved_config.lock().unwrap();
-                *config_guard = load_config(CONFIG_PATH).unwrap();
+            println!("Event {:?}", event.kind);
+            if event.kind == EventKind::Modify(ModifyKind::Data(DataChange::Any)) {
+                match load_config(CONFIG_PATH) {
+                    Ok(new_config) => *moved_config.lock().unwrap() = new_config,
+                    Err(error) => println!("Error reloading config: {:?}", error)
+                }
             }
         })?;
-
-    watcher
-        .configure(notify::Config::OngoingEvents(Some(
-            std::time::Duration::from_secs(1),
-        )))
-        .unwrap();
 
     watcher.watch(CONFIG_PATH, RecursiveMode::Recursive)?;
 
