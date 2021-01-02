@@ -1,6 +1,7 @@
 use announcer::messages::{load_config, save_config, Config, Message};
 use notify::{
-    event::{ModifyKind, DataChange}, Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher, 
+    event::{DataChange, ModifyKind},
+    Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
 };
 use std::sync::{Arc, Mutex};
 use tide::{Body, Response};
@@ -11,18 +12,16 @@ const CONFIG_PATH: &str = "config.json";
 async fn main() -> tide::Result<()> {
     let config = load_config(CONFIG_PATH).unwrap();
     let config = Arc::new(Mutex::new(config));
-
-    let moved_config = Arc::clone(&config);
+    let cloned_config = Arc::clone(&config);
 
     let mut watcher: RecommendedWatcher =
         Watcher::new_immediate(move |result: Result<Event, Error>| {
             let event = result.unwrap();
 
-            println!("Event {:?}", event.kind);
-            if event.kind == EventKind::Modify(ModifyKind::Data(DataChange::Any)) {
+            if event.kind == EventKind::Modify(ModifyKind::Any) {
                 match load_config(CONFIG_PATH) {
-                    Ok(new_config) => *moved_config.lock().unwrap() = new_config,
-                    Err(error) => println!("Error reloading config: {:?}", error)
+                    Ok(new_config) => *cloned_config.lock().unwrap() = new_config,
+                    Err(error) => println!("Error reloading config: {:?}", error),
                 }
             }
         })?;
