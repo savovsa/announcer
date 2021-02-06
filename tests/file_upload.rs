@@ -12,7 +12,7 @@ async fn file_gets_saved() -> surf::Result<()> {
 
     let app = create_app().unwrap();
     let res = surf::Client::with_http_client(app)
-        .post(uri)
+        .put(uri)
         .body(surf::Body::from_json(&data)?)
         .await?;
 
@@ -22,6 +22,7 @@ async fn file_gets_saved() -> surf::Result<()> {
         std::fs::remove_file(file_path).unwrap();
     }
 
+    assert_eq!(res.status(), surf::StatusCode::Ok);
     assert!(file_exists);
 
     Ok(())

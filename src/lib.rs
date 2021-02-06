@@ -1,12 +1,14 @@
 pub mod messages;
+pub mod upload;
 
-use messages::{load_config, save_config, Config, Message};
+use messages::{endpoints::*, load_config, save_config, Config, Message};
 use notify::{
     event::{DataChange, ModifyKind},
     Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
 };
 use std::sync::{Arc, Mutex};
 use tide::{Body, Response};
+use upload::endpoints::*;
 
 const CONFIG_PATH: &str = "config.json";
 
@@ -33,28 +35,9 @@ pub fn create_app() -> tide::Result<tide::Server<Arc<Mutex<Config>>>> {
 
     app.at("/messages").get(get_messages);
     app.at("/message/:name").get(get_message);
+    app.at("/upload/:name").put(upload);
 
     Ok(app)
 }
 
-type Request = tide::Request<Arc<Mutex<Config>>>;
-
-async fn get_messages(req: Request) -> tide::Result {
-    let mut res = Response::new(200);
-    let config = &req.state().lock().unwrap();
-    let body = Body::from_json(&config.messages)?;
-    res.set_body(body);
-    Ok(res)
-}
-
-async fn get_message(req: Request) -> tide::Result {
-    let mut res = Response::new(200);
-
-    let name: String = req.param("name")?.parse()?;
-    let config = &req.state().lock().unwrap();
-    let value = config.messages.get(&name);
-
-    let body = Body::from_json(&value)?;
-    res.set_body(body);
-    Ok(res)
-}
+pub type Request = tide::Request<Arc<Mutex<Config>>>;

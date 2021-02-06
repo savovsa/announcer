@@ -34,3 +34,30 @@ pub fn load_config(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
     let config: Config = serde_json::from_reader(reader)?;
     Ok(config)
 }
+
+pub mod endpoints {
+    use surf::Body;
+    use tide::Response;
+
+    use crate::Request;
+
+    pub async fn get_messages(req: Request) -> tide::Result {
+        let mut res = Response::new(200);
+        let config = &req.state().lock().unwrap();
+        let body = Body::from_json(&config.messages)?;
+        res.set_body(body);
+        Ok(res)
+    }
+
+    pub async fn get_message(req: Request) -> tide::Result {
+        let mut res = Response::new(200);
+
+        let name: String = req.param("name")?.parse()?;
+        let config = &req.state().lock().unwrap();
+        let value = config.messages.get(&name);
+
+        let body = Body::from_json(&value)?;
+        res.set_body(body);
+        Ok(res)
+    }
+}
