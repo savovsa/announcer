@@ -23,7 +23,41 @@ pub fn save_config(config: Config, path: &str) {
 
 pub fn load_config(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
     let file = std::fs::File::open(path)?;
+    let file_size = file.metadata()?.len();
+
+    if file_size == 0 {
+        return Err("The config file is empty.".into());
+    }
+
     let reader = std::io::BufReader::new(file);
+
     let config: Config = serde_json::from_reader(reader)?;
     Ok(config)
+}
+
+pub mod endpoints {
+    use surf::Body;
+    use tide::Response;
+
+    use crate::Request;
+
+    pub async fn get_messages(req: Request) -> tide::Result {
+        let mut res = Response::new(200);
+        let config = &req.state().lock().unwrap();
+        let body = Body::from_json(&config.messages)?;
+        res.set_body(body);
+        Ok(res)
+    }
+
+    pub async fn get_message(req: Request) -> tide::Result {
+        let mut res = Response::new(200);
+
+        let name: String = req.param("name")?.parse()?;
+        let config = &req.state().lock().unwrap();
+        let value = config.messages.get(&name);
+
+        let body = Body::from_json(&value)?;
+        res.set_body(body);
+        Ok(res)
+    }
 }
