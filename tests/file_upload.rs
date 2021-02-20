@@ -16,7 +16,6 @@ async fn audio_file_gets_saved() -> surf::Result<()> {
         .put(uri)
         .body(body)
         .await?;
-    // TODO: assert the error, don't bubble it
 
     let file_exists = std::fs::metadata(file_path.clone()).is_ok();
 
@@ -24,6 +23,8 @@ async fn audio_file_gets_saved() -> surf::Result<()> {
         std::fs::remove_file(file_path).unwrap();
     }
 
+    // TODO: Find a nicer way to test things like this
+    // that prints why an error happened
     assert_eq!(res.status(), surf::StatusCode::Ok);
     assert!(file_exists);
 
@@ -44,14 +45,14 @@ async fn non_audio_file_doesnt_get_saved() {
         .await
         .unwrap();
 
-    // TODO: assert the error, don't unwrap it
-
     let file_exists = std::fs::metadata(file_path.clone()).is_ok();
 
     if file_exists {
         std::fs::remove_file(file_path).unwrap();
     }
 
+    // TODO: Find a nicer way to test things like this
+    // that prints why an error happened
     assert_eq!(res.status(), surf::StatusCode::BadRequest);
     assert!(!file_exists);
 }
