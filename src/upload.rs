@@ -1,6 +1,8 @@
 use crate::Request;
 use rodio;
 
+pub const UNRECOGNIZED_FILE_FORMAT_ERROR_MESSAGE: &str = "Unrecognized file format";
+
 pub mod endpoints {
     use super::*;
     use crate::Request;
@@ -10,7 +12,18 @@ pub mod endpoints {
 
     pub async fn upload(mut req: Request) -> tide::Result {
         // Using a &mut because reading the request body as bytes requires it
-        let bytes = parse_audio_file(&mut req).await?;
+
+        let parsing_result = parse_audio_file(&mut req).await;
+
+        if let Err(error) = parsing_result {
+            let mut res = tide::Response::new(400);
+            res.set_body(UNRECOGNIZED_FILE_FORMAT_ERROR_MESSAGE);
+
+            return Ok(res);
+        }
+
+        let bytes = parsing_result.unwrap();
+
         let name: String = req.param("name")?.parse()?;
 
         let file_path = {

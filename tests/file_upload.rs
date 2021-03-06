@@ -54,5 +54,8 @@ async fn non_audio_file_doesnt_get_saved() {
     // TODO: Find a nicer way to test things like this
     // that prints why an error happened
     assert_eq!(res.status(), surf::StatusCode::BadRequest);
+
+    let body = res.body_string().await.unwrap();
+    assert_eq!(body, "Unrecognized file format");
     assert!(!file_exists);
 }
