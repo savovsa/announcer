@@ -1,13 +1,11 @@
 pub mod messages;
 pub mod upload;
 
-use messages::{endpoints::*, load_config, save_config, Config, Message};
+use messages::{endpoints::*, load_config, Config};
 use notify::{
-    event::{DataChange, ModifyKind},
-    Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
+    event::ModifyKind, Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
 };
 use std::sync::{Arc, Mutex};
-use tide::{Body, Response};
 use upload::endpoints::*;
 
 const CONFIG_PATH: &str = "config.json";

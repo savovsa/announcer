@@ -1,5 +1,5 @@
-use announcer::create_app;
 use announcer::messages::load_config;
+use announcer::{create_app, upload};
 use async_std;
 use surf::{self, Body};
 
@@ -12,7 +12,7 @@ async fn audio_file_gets_saved() -> surf::Result<()> {
     let app = create_app().unwrap();
 
     let body = Body::from_file("tests/soft-bells.mp3").await?;
-    let mut res = surf::Client::with_http_client(app)
+    let res = surf::Client::with_http_client(app)
         .put(uri)
         .body(body)
         .await?;
@@ -56,6 +56,6 @@ async fn non_audio_file_doesnt_get_saved() {
     assert_eq!(res.status(), surf::StatusCode::BadRequest);
 
     let body = res.body_string().await.unwrap();
-    assert_eq!(body, "Unrecognized file format");
+    assert_eq!(body, upload::UNRECOGNIZED_FILE_FORMAT_ERROR_MESSAGE);
     assert!(!file_exists);
 }
