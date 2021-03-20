@@ -13,3 +13,4 @@ serde_json = "1.0"
 serde = "1.0.115"
 notify = { version = "5.0.0-pre.4", features = ["serde"] }
 surf = "2.1.0"
+rodio = "0.13.0"
