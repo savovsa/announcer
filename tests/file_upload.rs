@@ -1,8 +1,10 @@
-use announcer::messages::{load_config, Message};
 use announcer::{create_app, upload};
+use announcer::{
+    messages::{load_config, Message},
+    upload::FileWithMeta,
+};
 use async_std;
 use k9::assert_equal;
-use serde::{Deserialize, Serialize};
 use surf::{self, Body};
 
 const MP3_FILE_PATH: &str = "tests/soft-bells.mp3";
@@ -62,12 +64,6 @@ async fn non_audio_file_doesnt_get_saved() {
     let body = res.body_string().await.unwrap();
     assert_eq!(body, upload::UNRECOGNIZED_FILE_FORMAT_ERROR_MESSAGE);
     assert!(!file_exists);
-}
-
-#[derive(Serialize, Deserialize)]
-struct FileWithMeta {
-    file: Vec<u8>,
-    meta: Message,
 }
 
 #[async_std::test]

@@ -1,8 +1,15 @@
-use crate::Request;
+use crate::{messages::Message, Request};
 use rodio;
+use serde::{Deserialize, Serialize};
 
 pub const UNRECOGNIZED_FILE_FORMAT_ERROR_MESSAGE: &str =
     "Unrecognized file format, please upload MP3, WAV, Vorbis or FLAC.";
+
+#[derive(Serialize, Deserialize)]
+pub struct FileWithMeta {
+    pub file: Vec<u8>,
+    pub meta: Message,
+}
 
 pub mod endpoints {
     use super::*;
