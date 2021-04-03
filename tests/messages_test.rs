@@ -32,7 +32,7 @@ fn save_config_to_file() {
 
     let path = "tests/messages_test_config_saved.json";
 
-    save_config(config, path);
+    save_config(&config, Some(path));
 
     let Config {
         audio_folder_path,

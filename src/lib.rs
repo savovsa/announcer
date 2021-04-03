@@ -11,6 +11,7 @@ use upload::endpoints::*;
 const CONFIG_PATH: &str = "config.json";
 
 pub fn create_app() -> tide::Result<tide::Server<Arc<Mutex<Config>>>> {
+    // TODO: create a default config instead of unwrapping
     let config = load_config(CONFIG_PATH).unwrap();
     let config = Arc::new(Mutex::new(config));
     let cloned_config = Arc::clone(&config);

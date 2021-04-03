@@ -13,14 +13,15 @@ pub struct FileWithMeta {
 
 pub mod endpoints {
     use super::*;
-    use crate::Request;
+    use crate::{messages::save_config, Request};
     use async_std::{fs::OpenOptions, io};
     use std::path::Path;
     use tide;
 
     pub async fn upload(mut req: Request) -> tide::Result {
-        // Using a &mut because reading the request body as bytes requires it
-        let parsing_result = parse_audio_file(&mut req).await;
+        let FileWithMeta { file, meta } = req.body_json().await?;
+
+        let parsing_result = parse_audio_file(file).await;
 
         if parsing_result.is_err() {
             let mut res = tide::Response::new(400);
@@ -35,7 +36,7 @@ pub mod endpoints {
 
         let file_path = {
             let config = &req.state().lock().unwrap();
-            Path::new(&config.audio_folder_path).join(name)
+            Path::new(&config.audio_folder_path).join(&name)
         };
 
         let file = OpenOptions::new()
@@ -46,13 +47,20 @@ pub mod endpoints {
 
         io::copy(io::Cursor::new(bytes), file).await?;
 
+        // get the new config
+        let config = &mut req.state().lock().unwrap();
+
+        // insert the new message
+        config.messages.insert(name, meta);
+
+        // save to disk
+        save_config(config, None);
         let res = tide::Response::new(200);
         Ok(res)
     }
 }
 
-async fn parse_audio_file(req: &mut Request) -> Result<Vec<u8>, rodio::decoder::DecoderError> {
-    let bytes = req.body_bytes().await.unwrap();
+async fn parse_audio_file(bytes: Vec<u8>) -> Result<Vec<u8>, rodio::decoder::DecoderError> {
     let cursor = std::io::Cursor::new(bytes.clone());
     let rodio_result = rodio::decoder::Decoder::new(cursor);
 
