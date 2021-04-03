@@ -10,7 +10,7 @@ pub struct Config {
 /// The key is the audio file name
 type Messages = HashMap<String, Message>;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Message {
     pub display_name: String,
     pub volume: f32,

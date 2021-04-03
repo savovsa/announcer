@@ -1,6 +1,7 @@
 use announcer::messages::{load_config, Message};
 use announcer::{create_app, upload};
 use async_std;
+use k9::assert_equal;
 use serde::{Deserialize, Serialize};
 use surf::{self, Body};
 
@@ -71,20 +72,21 @@ struct FileWithMeta {
 
 #[async_std::test]
 async fn config_is_updated_after_successful_uploading() {
-    let file_name = "soft-bells.mp3";
-    let file_path = std::path::Path::new("sounds").join(file_name);
+    let file_path = std::path::Path::new("sounds").join("soft-bells.mp3");
     let uri = "http://localhost:8080/upload/soft-bells.mp3";
 
     let app = create_app().unwrap();
 
     let file = std::fs::read(MP3_FILE_PATH).unwrap();
 
+    let meta = Message {
+        volume: 1.0,
+        display_name: "soft-bells.mp3".to_string(),
+    };
+
     let file_with_meta = FileWithMeta {
         file,
-        meta: Message {
-            volume: 1.0,
-            display_name: "soft-bells.mp3".to_string(),
-        },
+        meta: meta.clone(),
     };
     let body = surf::Body::from_json(&file_with_meta).unwrap();
 
@@ -100,7 +102,8 @@ async fn config_is_updated_after_successful_uploading() {
         std::fs::remove_file(file_path).unwrap();
     }
 
-    // TODO:
-    // load configuration stored in json file
-    // check message
+    let config = load_config("config.json").unwrap();
+    let message = config.messages.get("soft-bells.mp3").unwrap();
+
+    assert_equal!(meta, *message);
 }
