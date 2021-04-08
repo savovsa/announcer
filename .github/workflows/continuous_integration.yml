@@ -21,6 +21,9 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Install package
+        run: sudo apt-get install libasound2-dev
+
       - name: 🔨 Build
         uses: actions-rs/cargo@v1
         with:
