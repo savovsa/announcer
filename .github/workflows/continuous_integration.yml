@@ -26,7 +26,7 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Install package
+      - name: Install compilation dependency
         run: sudo apt-get install libasound2-dev
 
       - name: 🔨 Build
