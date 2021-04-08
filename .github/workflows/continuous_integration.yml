@@ -25,7 +25,8 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
-
+          
+      # Required by the library https://github.com/RustAudio/rodio/issues/200#issuecomment-436034271
       - name: Install compilation dependency
         run: sudo apt-get install libasound2-dev
 
