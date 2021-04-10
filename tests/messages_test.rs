@@ -2,10 +2,11 @@ use announcer::messages::*;
 
 #[test]
 fn load_config_from_file() {
+    let path = std::path::PathBuf::from("tests/messages_test_config.json");
     let Config {
         audio_folder_path,
         messages,
-    } = load_config("tests/messages_test_config.json").unwrap();
+    } = load_config(&path).unwrap();
 
     assert_eq!(audio_folder_path, "sounds/");
 
@@ -30,14 +31,14 @@ fn save_config_to_file() {
         .collect(),
     };
 
-    let path = "tests/messages_test_config_saved.json";
+    let path = std::path::PathBuf::from("tests/messages_test_config_saved.json");
 
-    save_config(&config, Some(path));
+    save_config(&config, Some(&path));
 
     let Config {
         audio_folder_path,
         messages,
-    } = load_config(path).unwrap();
+    } = load_config(&path).unwrap();
 
     assert_eq!(audio_folder_path, "sounds/");
 

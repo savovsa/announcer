@@ -1,11 +1,10 @@
 use announcer::{create_app, upload};
 use announcer::{
-    messages::{load_config, Message},
+    messages::{load_config, Config, Message},
     upload::FileWithMeta,
 };
 use async_std;
 use k9::assert_equal;
-use surf::{self, Body};
 
 const MP3_FILE_PATH: &str = "tests/soft-bells.mp3";
 
@@ -112,7 +111,7 @@ async fn config_is_updated_after_successful_uploading() {
         std::fs::remove_file(file_path).unwrap();
     }
 
-    let config = load_config("config.json").unwrap();
+    let config = load_config(&Config::get_path()).unwrap();
     let message = config.messages.get("soft-bells.mp3").unwrap();
 
     assert_equal!(meta, *message);

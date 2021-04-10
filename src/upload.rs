@@ -1,4 +1,4 @@
-use crate::{messages::Message, Request};
+use crate::messages::Message;
 use rodio;
 use serde::{Deserialize, Serialize};
 
@@ -47,14 +47,10 @@ pub mod endpoints {
 
         io::copy(io::Cursor::new(bytes), file).await?;
 
-        // get the new config
         let config = &mut req.state().lock().unwrap();
-
-        // insert the new message
         config.messages.insert(name, meta);
-
-        // save to disk
         save_config(config, None);
+
         let res = tide::Response::new(200);
         Ok(res)
     }
