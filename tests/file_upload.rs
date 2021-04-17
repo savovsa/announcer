@@ -1,20 +1,32 @@
-use announcer::messages::{load_config, Message};
 use announcer::{create_app, upload};
+use announcer::{
+    messages::{load_config, Config, Message},
+    upload::FileWithMeta,
+};
 use async_std;
-use serde::{Deserialize, Serialize};
-use surf::{self, Body};
+use k9::assert_equal;
 
 const MP3_FILE_PATH: &str = "tests/soft-bells.mp3";
 
 #[async_std::test]
 async fn audio_file_gets_saved() -> surf::Result<()> {
+    // remove the audio directory so that we test if we create it
+    std::fs::remove_dir_all("sounds").unwrap_or(());
+
     let file_name = "soft-bells.mp3";
     let file_path = std::path::Path::new("sounds").join(file_name);
     let uri = "http://localhost:8080/upload/soft-bells.mp3";
 
     let app = create_app().unwrap();
 
-    let body = Body::from_file(MP3_FILE_PATH).await?;
+    let file = std::fs::read(MP3_FILE_PATH).unwrap();
+    let meta = Message {
+        volume: 1.0,
+        display_name: "soft-bells.mp3".to_string(),
+    };
+    let file_with_meta = FileWithMeta { file, meta };
+    let body = surf::Body::from_json(&file_with_meta).unwrap();
+
     let res = surf::Client::with_http_client(app)
         .put(uri)
         .body(body)
@@ -27,7 +39,7 @@ async fn audio_file_gets_saved() -> surf::Result<()> {
     }
 
     // TODO: Find a nicer way to test things like this
-    // that prints why an error happened
+    // that prints why an HTTP error happened
     assert_eq!(res.status(), surf::StatusCode::Ok);
     assert!(file_exists);
 
@@ -39,12 +51,19 @@ async fn non_audio_file_doesnt_get_saved() {
     let file_name = "hello.wav";
     let file_path = std::path::Path::new("sounds").join(file_name);
     let uri = "http://localhost:8080/upload/hello.wav";
-    let data = load_config("tests/messages_test_config.json").unwrap();
+
+    let body = FileWithMeta {
+        file: vec![],
+        meta: Message {
+            volume: 1.0,
+            display_name: "".to_string(),
+        },
+    };
 
     let app = create_app().unwrap();
     let mut res = surf::Client::with_http_client(app)
         .put(uri)
-        .body(surf::Body::from_json(&data).unwrap())
+        .body(surf::Body::from_json(&body).unwrap())
         .await
         .unwrap();
 
@@ -63,28 +82,23 @@ async fn non_audio_file_doesnt_get_saved() {
     assert!(!file_exists);
 }
 
-#[derive(Serialize, Deserialize)]
-struct FileWithMeta {
-    file: Vec<u8>,
-    meta: Message,
-}
-
 #[async_std::test]
 async fn config_is_updated_after_successful_uploading() {
-    let file_name = "soft-bells.mp3";
-    let file_path = std::path::Path::new("sounds").join(file_name);
+    let file_path = std::path::Path::new("sounds").join("soft-bells.mp3");
     let uri = "http://localhost:8080/upload/soft-bells.mp3";
 
     let app = create_app().unwrap();
 
     let file = std::fs::read(MP3_FILE_PATH).unwrap();
 
+    let meta = Message {
+        volume: 1.0,
+        display_name: "soft-bells.mp3".to_string(),
+    };
+
     let file_with_meta = FileWithMeta {
         file,
-        meta: Message {
-            volume: 1.0,
-            display_name: "soft-bells.mp3".to_string(),
-        },
+        meta: meta.clone(),
     };
     let body = surf::Body::from_json(&file_with_meta).unwrap();
 
@@ -100,7 +114,8 @@ async fn config_is_updated_after_successful_uploading() {
         std::fs::remove_file(file_path).unwrap();
     }
 
-    // TODO:
-    // load configuration stored in json file
-    // check message
+    let config = load_config(&Config::get_path()).unwrap();
+    let message = config.messages.get("soft-bells.mp3").unwrap();
+
+    assert_equal!(meta, *message);
 }

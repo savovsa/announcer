@@ -1,0 +1,9 @@
+{
+  "audio_folder_path": "sounds",
+  "messages": {
+    "soft-bells.mp3": {
+      "display_name": "soft-bells.mp3",
+      "volume": 1.0
+    }
+  }
+}

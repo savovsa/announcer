@@ -1,27 +1,43 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
+use std::path::PathBuf;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub audio_folder_path: String,
     pub messages: Messages,
 }
 
+impl Config {
+    pub fn new() -> Config {
+        Config {
+            audio_folder_path: "sounds".to_string(),
+            messages: HashMap::new(),
+        }
+    }
+
+    pub fn get_path() -> PathBuf {
+        PathBuf::from("announcer.json")
+    }
+}
+
 /// The key is the audio file name
 type Messages = HashMap<String, Message>;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct Message {
     pub display_name: String,
     pub volume: f32,
 }
 
-pub fn save_config(config: Config, path: &str) {
+pub fn save_config(config: &Config, path: Option<&PathBuf>) {
+    let default_path = Config::get_path();
+    let path = path.unwrap_or(&default_path);
+
     let file = std::fs::File::create(path).unwrap();
     serde_json::to_writer_pretty(file, &config).unwrap();
 }
 
-pub fn load_config(path: &str) -> Result<Config, Box<dyn std::error::Error>> {
+pub fn load_config(path: &PathBuf) -> Result<Config, Box<dyn std::error::Error>> {
     let file = std::fs::File::open(path)?;
     let file_size = file.metadata()?.len();
 
