@@ -36,7 +36,13 @@ pub mod endpoints {
 
         let file_path = {
             let config = &req.state().lock().unwrap();
-            Path::new(&config.audio_folder_path).join(&name)
+            let path = Path::new(&config.audio_folder_path);
+
+            if !path.exists() {
+                std::fs::create_dir(&path)?;
+            }
+
+            path.join(&name)
         };
 
         let file = OpenOptions::new()

@@ -10,6 +10,9 @@ const MP3_FILE_PATH: &str = "tests/soft-bells.mp3";
 
 #[async_std::test]
 async fn audio_file_gets_saved() -> surf::Result<()> {
+    // remove the audio directory so that we test if we create it
+    std::fs::remove_dir_all("sounds").unwrap_or(());
+
     let file_name = "soft-bells.mp3";
     let file_path = std::path::Path::new("sounds").join(file_name);
     let uri = "http://localhost:8080/upload/soft-bells.mp3";
@@ -36,7 +39,7 @@ async fn audio_file_gets_saved() -> surf::Result<()> {
     }
 
     // TODO: Find a nicer way to test things like this
-    // that prints why an error happened
+    // that prints why an HTTP error happened
     assert_eq!(res.status(), surf::StatusCode::Ok);
     assert!(file_exists);
 
