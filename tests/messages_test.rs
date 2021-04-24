@@ -50,8 +50,8 @@ fn save_config_to_file() {
     assert_eq!(message.display_name, "Sound 2");
 }
 
-#[test]
-fn plays_massage_if_it_exists_in_configuration() {
+#[async_std::test]
+async fn plays_massage_if_it_exists_in_configuration() {
     let config = Config {
         audio_folder_path: "sounds/".to_string(),
         messages: [(
@@ -65,18 +65,18 @@ fn plays_massage_if_it_exists_in_configuration() {
         .cloned()
         .collect(),
     };
-    let state = Arc::new(Mutex::new(config));
-    let http_request = Request::new(
+
+    use tide::http::{Method, Request, Response, Url};
+
+    let app = announcer::create_app(Some(config)).unwrap();
+
+    let req = Request::new(
         Method::Get,
-        Url::parse("http://0.0.0.0/play/sound2.mp3").unwrap(),
+        Url::parse("https://example.com/play/sound2.mp3").unwrap(),
     );
+    let res: Response = app.respond(req).await.unwrap();
 
-    // this is private, how do I fix that?
-    let params = vec![tide::request::Params::new()];
-
-    let req = announcer::Request::new(state, http_request, params);
-
-    let result = announcer::messages::endpoints::play_message(req);
+    assert_eq!(res.status(), 200);
 }
 
 #[test]

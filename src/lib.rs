@@ -8,17 +8,22 @@ use notify::{
 use std::sync::{Arc, Mutex};
 use upload::endpoints::*;
 
-pub fn create_app() -> tide::Result<tide::Server<Arc<Mutex<Config>>>> {
+pub type State = Arc<Mutex<Config>>;
+pub type Request = tide::Request<State>;
+
+pub fn create_app(config: Option<Config>) -> tide::Result<tide::Server<State>> {
     let config_path = Config::get_path();
+    let config = config.unwrap_or_else(|| {
+        load_config(&config_path).unwrap_or_else(|_| {
+            let default_config = Config::new();
+            save_config(&default_config, None);
 
-    let config = load_config(&config_path).unwrap_or_else(|_| {
-        let default_config = Config::new();
-        save_config(&default_config, None);
-
-        default_config
+            default_config
+        })
     });
-    let config = Arc::new(Mutex::new(config));
-    let cloned_config = Arc::clone(&config);
+
+    let state: State = Arc::new(Mutex::new(config));
+    let cloned_state = Arc::clone(&state);
 
     let mut watcher: RecommendedWatcher =
         Watcher::new_immediate(move |result: Result<Event, Error>| {
@@ -26,7 +31,7 @@ pub fn create_app() -> tide::Result<tide::Server<Arc<Mutex<Config>>>> {
 
             if event.kind == EventKind::Modify(ModifyKind::Any) {
                 match load_config(&Config::get_path()) {
-                    Ok(new_config) => *cloned_config.lock().unwrap() = new_config,
+                    Ok(new_config) => *cloned_state.lock().unwrap() = new_config,
                     Err(error) => println!("Error reloading config: {:?}", error),
                 }
             }
@@ -34,7 +39,7 @@ pub fn create_app() -> tide::Result<tide::Server<Arc<Mutex<Config>>>> {
 
     watcher.watch(&config_path, RecursiveMode::Recursive)?;
 
-    let mut app = tide::with_state(config);
+    let mut app = tide::with_state(state);
 
     app.at("/messages").get(get_messages);
     app.at("/message/:name").get(get_message);
@@ -42,5 +47,3 @@ pub fn create_app() -> tide::Result<tide::Server<Arc<Mutex<Config>>>> {
 
     Ok(app)
 }
-
-pub type Request = tide::Request<Arc<Mutex<Config>>>;
