@@ -17,3 +17,4 @@ rodio = "0.13.1"
 
 [dev-dependencies]
 k9 = "0.11.0"
+mockall = "0.9.1"

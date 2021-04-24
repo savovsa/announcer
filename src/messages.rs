@@ -76,4 +76,14 @@ pub mod endpoints {
         res.set_body(body);
         Ok(res)
     }
+
+    pub async fn play_message(req: Request) -> tide::Result {
+        let mut res = Response::new(200);
+
+        let name: String = req.param("name")?.parse()?;
+        let config = &req.state().lock().unwrap();
+        let message = config.messages.get(&name);
+
+        Ok(res)
+    }
 }
