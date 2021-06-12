@@ -59,8 +59,8 @@ pub mod endpoints {
 
     pub async fn get_messages(req: Request) -> tide::Result {
         let mut res = Response::new(200);
-        let config = &req.state().lock().unwrap();
-        let body = Body::from_json(&config.messages)?;
+        let state = &req.state().lock().unwrap();
+        let body = Body::from_json(&state.config.lock().unwrap().messages)?;
         res.set_body(body);
         Ok(res)
     }
@@ -69,7 +69,8 @@ pub mod endpoints {
         let mut res = Response::new(200);
 
         let name: String = req.param("name")?.parse()?;
-        let config = &req.state().lock().unwrap();
+        let state = &req.state().lock().unwrap();
+        let config = state.config.lock().unwrap();
         let value = config.messages.get(&name);
 
         let body = Body::from_json(&value)?;
@@ -78,12 +79,19 @@ pub mod endpoints {
     }
 
     pub async fn play_message(req: Request) -> tide::Result {
-        let mut res = Response::new(200);
-
+        
         let name: String = req.param("name")?.parse()?;
-        let config = &req.state().lock().unwrap();
+        let state = &req.state().lock().unwrap();
+        let config = state.config.lock().unwrap();
         let message = config.messages.get(&name);
-
+    
+        if message == None {
+            return Ok(Response::new(404));
+        }
+      
+        
+        // play
+        let mut res = Response::new(200);
         Ok(res)
     }
 }
