@@ -1,8 +1,7 @@
 use std::sync::{Arc, Mutex};
-
 use announcer::messages::*;
-use surf::Url;
-use tide::http::{Method, Request};
+use tide::http::{Method, Request, Response, Url};
+
 #[test]
 fn load_config_from_file() {
     let path = std::path::PathBuf::from("tests/messages_test_config.json");
@@ -66,8 +65,6 @@ async fn plays_massage_if_it_exists_in_configuration() {
         .collect(),
     };
 
-    use tide::http::{Method, Request, Response, Url};
-
     let app = announcer::create_app(Some(config)).unwrap();
 
     let req = Request::new(
@@ -79,5 +76,29 @@ async fn plays_massage_if_it_exists_in_configuration() {
     assert_eq!(res.status(), 200);
 }
 
-#[test]
-fn does_not_play_massage_if_its_not_in_the_configuration() {}
+#[async_std::test]
+async fn does_not_play_massage_if_its_not_in_the_configuration() {
+    let config = Config {
+        audio_folder_path: "sounds/".to_string(),
+        messages: [(
+            "sound2.mp3".to_string(),
+            Message {
+                display_name: "Sound 2".to_string(),
+                volume: 60_f32,
+            },
+        )]
+        .iter()
+        .cloned()
+        .collect(),
+    };
+
+    let app = announcer::create_app(Some(config)).unwrap();
+
+    let req = Request::new(
+        Method::Get,
+        Url::parse("https://example.com/play/sound0.mp3").unwrap(),
+    );
+    let mut res: Response = app.respond(req).await.unwrap();
+    
+    assert_eq!(res.status(), 404);  
+}
