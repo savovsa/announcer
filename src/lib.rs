@@ -27,10 +27,7 @@ pub struct AppWithState {
     pub state: State
 }
 
-pub fn create_app(config: Option<Config>) -> tide::Result<AppWithState> {
-    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-    let sink = Sink::try_new(&stream_handle).unwrap();
-    
+pub fn create_app(config: Option<Config>, sink: Option<Arc<Mutex<Sink>>>) -> tide::Result<AppWithState> {
     let config_path = Config::get_path();
     let config = config.unwrap_or_else(|| {
         load_config(&config_path).unwrap_or_else(|_| {
@@ -42,7 +39,7 @@ pub fn create_app(config: Option<Config>) -> tide::Result<AppWithState> {
     });
 
     let app_state = AppState {
-        sink: Arc::new(Mutex::new(sink)),
+        sink: sink.unwrap_or(Arc::new(Mutex::new(Sink::new_idle().0))),
         config: Arc::new(Mutex::new(config))
     };
 

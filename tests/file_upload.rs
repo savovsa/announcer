@@ -17,7 +17,7 @@ async fn audio_file_gets_saved() -> surf::Result<()> {
     let file_path = std::path::Path::new("sounds").join(file_name);
     let uri = "http://localhost:8080/upload/soft-bells.mp3";
 
-    let app_with_state = create_app(None).unwrap();
+    let app_with_state = create_app(None, None).unwrap();
 
     let file = std::fs::read(MP3_FILE_PATH).unwrap();
     let meta = Message {
@@ -60,7 +60,7 @@ async fn non_audio_file_doesnt_get_saved() {
         },
     };
 
-    let app_with_state = create_app(None).unwrap();
+    let app_with_state = create_app(None, None).unwrap();
     let mut res = surf::Client::with_http_client(app_with_state.app)
         .put(uri)
         .body(surf::Body::from_json(&body).unwrap())
@@ -87,7 +87,7 @@ async fn config_is_updated_after_successful_uploading() {
     let file_path = std::path::Path::new("sounds").join("soft-bells.mp3");
     let uri = "http://localhost:8080/upload/soft-bells.mp3";
 
-    let app_with_state = create_app(None).unwrap();
+    let app_with_state = create_app(None, None).unwrap();
 
     let file = std::fs::read(MP3_FILE_PATH).unwrap();
 

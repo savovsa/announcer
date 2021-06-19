@@ -64,7 +64,7 @@ async fn plays_massage_if_it_exists_in_configuration() {
         .collect(),
     };
 
-    let app_with_state = announcer::create_app(Some(config)).unwrap();
+    let app_with_state = announcer::create_app(Some(config), None).unwrap();
 
     let req = Request::new(
         Method::Get,
@@ -91,7 +91,7 @@ async fn does_not_play_massage_if_its_not_in_the_configuration() {
         .collect(),
     };
 
-    let app_with_state = announcer::create_app(Some(config)).unwrap();
+    let app_with_state = announcer::create_app(Some(config), None).unwrap();
 
     let req = Request::new(
         Method::Get,
