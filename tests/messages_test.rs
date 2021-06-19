@@ -1,4 +1,3 @@
-use std::sync::{Arc, Mutex};
 use announcer::messages::*;
 use tide::http::{Method, Request, Response, Url};
 
@@ -65,13 +64,13 @@ async fn plays_massage_if_it_exists_in_configuration() {
         .collect(),
     };
 
-    let app = announcer::create_app(Some(config)).unwrap();
+    let app_with_state = announcer::create_app(Some(config)).unwrap();
 
     let req = Request::new(
         Method::Get,
         Url::parse("https://example.com/play/sound2.mp3").unwrap(),
     );
-    let res: Response = app.respond(req).await.unwrap();
+    let res: Response = app_with_state.app.respond(req).await.unwrap();
 
     assert_eq!(res.status(), 200);
 }
@@ -92,13 +91,13 @@ async fn does_not_play_massage_if_its_not_in_the_configuration() {
         .collect(),
     };
 
-    let app = announcer::create_app(Some(config)).unwrap();
+    let app_with_state = announcer::create_app(Some(config)).unwrap();
 
     let req = Request::new(
         Method::Get,
         Url::parse("https://example.com/play/sound0.mp3").unwrap(),
     );
-    let mut res: Response = app.respond(req).await.unwrap();
+    let res: Response = app_with_state.app.respond(req).await.unwrap();
     
     assert_eq!(res.status(), 404);  
 }

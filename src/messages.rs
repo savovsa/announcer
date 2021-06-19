@@ -91,7 +91,7 @@ pub mod endpoints {
       
         
         // play
-        let mut res = Response::new(200);
+        let res = Response::new(200);
         Ok(res)
     }
 }
