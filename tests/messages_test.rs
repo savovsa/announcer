@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use announcer::messages::*;
 use tide::http::{Method, Request, Response, Url};
 
@@ -50,13 +52,22 @@ fn save_config_to_file() {
 
 #[async_std::test]
 async fn plays_massage_if_it_exists_in_configuration() {
+    let sound_name = "soft-bells.mp3";
+    let audio_folder = PathBuf::from("sounds");
+
+    // Temporarily copy an audio file in the sounds folder,
+    // because the play endpoint expects to be load a file.
+    let new_audio_file = audio_folder.join(sound_name);
+    let existing_audio_file = PathBuf::from("tests").join(sound_name);
+    std::fs::copy(existing_audio_file, &new_audio_file).unwrap();
+
     let config = Config {
-        audio_folder_path: "sounds/".to_string(),
+        audio_folder_path: audio_folder.to_str().unwrap().into(),
         messages: [(
-            "sound2.mp3".to_string(),
+            sound_name.into(),
             Message {
-                display_name: "Sound 2".to_string(),
-                volume: 60_f32,
+                display_name: "Hello".to_string(),
+                volume: 1_f32,
             },
         )]
         .iter()
@@ -66,11 +77,16 @@ async fn plays_massage_if_it_exists_in_configuration() {
 
     let app_with_state = announcer::create_app(Some(config), None).unwrap();
 
+    let url_string = format!("https://example.com/play/{}", sound_name);
     let req = Request::new(
         Method::Get,
-        Url::parse("https://example.com/play/sound2.mp3").unwrap(),
+        Url::parse(&url_string).unwrap(),
     );
     let res: Response = app_with_state.app.respond(req).await.unwrap();
+
+    
+    // Clean up temp audio file
+    std::fs::remove_file(new_audio_file).unwrap();
 
     assert_eq!(res.status(), 200);
 }
