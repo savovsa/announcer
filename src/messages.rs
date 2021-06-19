@@ -52,8 +52,8 @@ pub fn load_config(path: &PathBuf) -> Result<Config, Box<dyn std::error::Error>>
 }
 
 pub mod endpoints {
-    use std::{fs::File, io::BufReader, path::PathBuf};
     use rodio::Decoder;
+    use std::{fs::File, io::BufReader, path::PathBuf};
     use surf::Body;
     use tide::Response;
 
@@ -85,11 +85,11 @@ pub mod endpoints {
         let state = &req.state().lock().unwrap();
         let config = state.config.lock().unwrap();
         let message = config.messages.get(&name);
-    
+
         if message == None {
             return Ok(Response::new(404));
         }
-              
+
         let path = PathBuf::from(&config.audio_folder_path).join(name);
         let file = File::open(path);
 

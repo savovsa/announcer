@@ -1,19 +1,19 @@
 pub mod messages;
 pub mod upload;
 
-use rodio::{OutputStream, Sink};
 use messages::{endpoints::*, load_config, save_config, Config};
-use std::{sync::{Arc, Mutex}};
+use rodio::Sink;
+use std::sync::{Arc, Mutex};
 use upload::endpoints::*;
 
 #[derive(Clone)]
 pub struct AppState {
     pub sink: Arc<Mutex<Sink>>,
-    pub config: Arc<Mutex<Config>>
+    pub config: Arc<Mutex<Config>>,
 }
 
 impl AppState {
-    pub fn update_config(&mut self, new_config: Config) { 
+    pub fn update_config(&mut self, new_config: Config) {
         let mut config = self.config.lock().unwrap();
         *config = new_config;
     }
@@ -24,10 +24,13 @@ pub type Request = tide::Request<State>;
 pub type App = tide::Server<State>;
 pub struct AppWithState {
     pub app: App,
-    pub state: State
+    pub state: State,
 }
 
-pub fn create_app(config: Option<Config>, sink: Option<Arc<Mutex<Sink>>>) -> tide::Result<AppWithState> {
+pub fn create_app(
+    config: Option<Config>,
+    sink: Option<Arc<Mutex<Sink>>>,
+) -> tide::Result<AppWithState> {
     let config_path = Config::get_path();
     let config = config.unwrap_or_else(|| {
         load_config(&config_path).unwrap_or_else(|_| {
@@ -40,7 +43,7 @@ pub fn create_app(config: Option<Config>, sink: Option<Arc<Mutex<Sink>>>) -> tid
 
     let app_state = AppState {
         sink: sink.unwrap_or(Arc::new(Mutex::new(Sink::new_idle().0))),
-        config: Arc::new(Mutex::new(config))
+        config: Arc::new(Mutex::new(config)),
     };
 
     let state: State = Arc::new(Mutex::new(app_state));
@@ -55,6 +58,6 @@ pub fn create_app(config: Option<Config>, sink: Option<Arc<Mutex<Sink>>>) -> tid
 
     Ok(AppWithState {
         app,
-        state: cloned_state
+        state: cloned_state,
     })
 }

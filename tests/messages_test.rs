@@ -78,13 +78,9 @@ async fn plays_massage_if_it_exists_in_configuration() {
     let app_with_state = announcer::create_app(Some(config), None).unwrap();
 
     let url_string = format!("https://example.com/play/{}", sound_name);
-    let req = Request::new(
-        Method::Get,
-        Url::parse(&url_string).unwrap(),
-    );
+    let req = Request::new(Method::Get, Url::parse(&url_string).unwrap());
     let res: Response = app_with_state.app.respond(req).await.unwrap();
 
-    
     // Clean up temp audio file
     std::fs::remove_file(new_audio_file).unwrap();
 
@@ -114,6 +110,6 @@ async fn does_not_play_massage_if_its_not_in_the_configuration() {
         Url::parse("https://example.com/play/sound0.mp3").unwrap(),
     );
     let res: Response = app_with_state.app.respond(req).await.unwrap();
-    
-    assert_eq!(res.status(), 404);  
+
+    assert_eq!(res.status(), 404);
 }
