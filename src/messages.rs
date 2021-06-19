@@ -52,6 +52,8 @@ pub fn load_config(path: &PathBuf) -> Result<Config, Box<dyn std::error::Error>>
 }
 
 pub mod endpoints {
+    use rodio::Decoder;
+    use std::{fs::File, io::BufReader, path::PathBuf};
     use surf::Body;
     use tide::Response;
 
@@ -59,8 +61,8 @@ pub mod endpoints {
 
     pub async fn get_messages(req: Request) -> tide::Result {
         let mut res = Response::new(200);
-        let config = &req.state().lock().unwrap();
-        let body = Body::from_json(&config.messages)?;
+        let state = &req.state().lock().unwrap();
+        let body = Body::from_json(&state.config.lock().unwrap().messages)?;
         res.set_body(body);
         Ok(res)
     }
@@ -69,11 +71,40 @@ pub mod endpoints {
         let mut res = Response::new(200);
 
         let name: String = req.param("name")?.parse()?;
-        let config = &req.state().lock().unwrap();
+        let state = &req.state().lock().unwrap();
+        let config = state.config.lock().unwrap();
         let value = config.messages.get(&name);
 
         let body = Body::from_json(&value)?;
         res.set_body(body);
+        Ok(res)
+    }
+
+    pub async fn play_message(req: Request) -> tide::Result {
+        let name: String = req.param("name")?.parse()?;
+        let state = &req.state().lock().unwrap();
+        let config = state.config.lock().unwrap();
+        let message = config.messages.get(&name);
+
+        if message == None {
+            return Ok(Response::new(404));
+        }
+
+        let path = PathBuf::from(&config.audio_folder_path).join(name);
+        let file = File::open(path);
+
+        if file.is_err() {
+            return Ok(Response::new(500));
+        }
+
+        let reader = BufReader::new(file.unwrap());
+        let source = Decoder::new(reader).unwrap();
+
+        let sink = state.sink.lock().unwrap();
+        sink.append(source);
+        sink.play();
+
+        let res = Response::new(200);
         Ok(res)
     }
 }

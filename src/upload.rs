@@ -35,7 +35,8 @@ pub mod endpoints {
         let name: String = req.param("name")?.parse()?;
 
         let file_path = {
-            let config = &req.state().lock().unwrap();
+            let state = &req.state().lock().unwrap();
+            let config = state.config.lock().unwrap();
             let path = Path::new(&config.audio_folder_path);
 
             if !path.exists() {
@@ -53,7 +54,8 @@ pub mod endpoints {
 
         io::copy(io::Cursor::new(bytes), file).await?;
 
-        let config = &mut req.state().lock().unwrap();
+        let state = &mut req.state().lock().unwrap();
+        let config = &mut state.config.lock().unwrap();
         config.messages.insert(name, meta);
         save_config(config, None);
 

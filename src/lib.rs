@@ -2,45 +2,62 @@ pub mod messages;
 pub mod upload;
 
 use messages::{endpoints::*, load_config, save_config, Config};
-use notify::{
-    event::ModifyKind, Error, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
-};
+use rodio::Sink;
 use std::sync::{Arc, Mutex};
 use upload::endpoints::*;
 
-pub fn create_app() -> tide::Result<tide::Server<Arc<Mutex<Config>>>> {
+#[derive(Clone)]
+pub struct AppState {
+    pub sink: Arc<Mutex<Sink>>,
+    pub config: Arc<Mutex<Config>>,
+}
+
+impl AppState {
+    pub fn update_config(&mut self, new_config: Config) {
+        let mut config = self.config.lock().unwrap();
+        *config = new_config;
+    }
+}
+
+pub type State = Arc<Mutex<AppState>>;
+pub type Request = tide::Request<State>;
+pub type App = tide::Server<State>;
+pub struct AppWithState {
+    pub app: App,
+    pub state: State,
+}
+
+pub fn create_app(
+    config: Option<Config>,
+    sink: Option<Arc<Mutex<Sink>>>,
+) -> tide::Result<AppWithState> {
     let config_path = Config::get_path();
+    let config = config.unwrap_or_else(|| {
+        load_config(&config_path).unwrap_or_else(|_| {
+            let default_config = Config::new();
+            save_config(&default_config, None);
 
-    let config = load_config(&config_path).unwrap_or_else(|_| {
-        let default_config = Config::new();
-        save_config(&default_config, None);
-
-        default_config
+            default_config
+        })
     });
-    let config = Arc::new(Mutex::new(config));
-    let cloned_config = Arc::clone(&config);
 
-    let mut watcher: RecommendedWatcher =
-        Watcher::new_immediate(move |result: Result<Event, Error>| {
-            let event = result.unwrap();
+    let app_state = AppState {
+        sink: sink.unwrap_or(Arc::new(Mutex::new(Sink::new_idle().0))),
+        config: Arc::new(Mutex::new(config)),
+    };
 
-            if event.kind == EventKind::Modify(ModifyKind::Any) {
-                match load_config(&Config::get_path()) {
-                    Ok(new_config) => *cloned_config.lock().unwrap() = new_config,
-                    Err(error) => println!("Error reloading config: {:?}", error),
-                }
-            }
-        })?;
+    let state: State = Arc::new(Mutex::new(app_state));
+    let cloned_state = Arc::clone(&state);
 
-    watcher.watch(&config_path, RecursiveMode::Recursive)?;
-
-    let mut app = tide::with_state(config);
+    let mut app = tide::with_state(state);
 
     app.at("/messages").get(get_messages);
     app.at("/message/:name").get(get_message);
     app.at("/upload/:name").put(upload);
+    app.at("/play/:name").get(play_message);
 
-    Ok(app)
+    Ok(AppWithState {
+        app,
+        state: cloned_state,
+    })
 }
-
-pub type Request = tide::Request<Arc<Mutex<Config>>>;
