@@ -1,5 +1,6 @@
 pub mod messages;
 pub mod upload;
+pub mod db;
 
 use messages::{endpoints::*, load_config, save_config, Config};
 use rodio::Sink;
