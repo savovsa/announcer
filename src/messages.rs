@@ -107,7 +107,7 @@ pub mod endpoints {
         let res = Response::new(200);
         Ok(res)
     }
-    
+
     pub async fn delete_message(req: Request) -> tide::Result {
         let mut res = Response::new(200);
 
@@ -117,8 +117,10 @@ pub mod endpoints {
         let value = config.messages.remove(&name);
 
         let body = Body::from_json(&value)?;
+        let path = PathBuf::from(&config.audio_folder_path).join(name);
+        std::fs::remove_file(path).unwrap();
+
         res.set_body(body);
         Ok(res)
     }
-
 }

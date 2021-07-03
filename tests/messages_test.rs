@@ -158,7 +158,7 @@ async fn delete_message_from_config() {
 
 #[async_std::test]
 async fn delete_message_audio_file() {
-    let sound_name = "soft-bells.mp3";
+    let sound_name = "sound_test.mp3";
     let audio_folder = PathBuf::from("sounds");
 
     // Temporarily copy an audio file in the sounds folder,
@@ -171,7 +171,7 @@ async fn delete_message_audio_file() {
 
     let req = Request::new(
         Method::Delete,
-        Url::parse("https://example.com/message/soft-bells.mp3").unwrap(),
+        Url::parse("https://example.com/message/sound_test.mp3").unwrap(),
     );
     let mut res: Response = app_with_state.app.respond(req).await.unwrap();
 
