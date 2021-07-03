@@ -169,7 +169,7 @@ async fn delete_message_audio_file() {
         Method::Delete,
         Url::parse("https://example.com/message/sound_test.mp3").unwrap(),
     );
-    let mut res: Response = app_with_state.app.respond(req).await.unwrap();
+    app_with_state.app.respond::<Request, Response>(req).await.unwrap();
 
     let file_exists = std::fs::metadata(&new_audio_file).is_ok();
 
