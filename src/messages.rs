@@ -118,7 +118,11 @@ pub mod endpoints {
 
         let body = Body::from_json(&value)?;
         let path = PathBuf::from(&config.audio_folder_path).join(name);
-        std::fs::remove_file(path).unwrap();
+
+        let file_exists = std::fs::metadata(path.clone()).is_ok();
+        if (file_exists) {
+            std::fs::remove_file(path)?;
+        }
 
         res.set_body(body);
         Ok(res)
