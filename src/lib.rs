@@ -57,7 +57,7 @@ pub fn create_app(
 
     app.at("/upload/:name").put(upload);
     app.at("/play/:name").get(play_message);
-    
+
     Ok(AppWithState {
         app,
         state: cloned_state,

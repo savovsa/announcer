@@ -123,13 +123,10 @@ async fn delete_message_from_config() {
 
     let config = Config {
         audio_folder_path: "sounds/".to_string(),
-        messages: [(
-            "sound2.mp3".to_string(),
-            message.clone(),
-        )]
-        .iter()
-        .cloned()
-        .collect(),
+        messages: [("sound2.mp3".to_string(), message.clone())]
+            .iter()
+            .cloned()
+            .collect(),
     };
 
     let app_with_state = announcer::create_app(Some(config), None).unwrap();
@@ -144,7 +141,6 @@ async fn delete_message_from_config() {
 
     let body: Message = res.body_json().await.unwrap();
     k9::assert_equal!(body, message);
-    
 
     let req = Request::new(
         Method::Get,
@@ -152,7 +148,7 @@ async fn delete_message_from_config() {
     );
     let mut res: Response = app_with_state.app.respond(req).await.unwrap();
     let message: Option<Message> = res.body_json().await.unwrap();
-    
+
     k9::assert_equal!(message, None);
 }
 
@@ -166,7 +162,7 @@ async fn delete_message_audio_file() {
     let new_audio_file = audio_folder.join(sound_name);
     let existing_audio_file = PathBuf::from("tests").join(sound_name);
     std::fs::copy(existing_audio_file, &new_audio_file).unwrap();
-        
+
     let app_with_state = announcer::create_app(None, None).unwrap();
 
     let req = Request::new(
