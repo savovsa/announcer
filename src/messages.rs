@@ -107,4 +107,18 @@ pub mod endpoints {
         let res = Response::new(200);
         Ok(res)
     }
+    
+    pub async fn delete_message(req: Request) -> tide::Result {
+        let mut res = Response::new(200);
+
+        let name: String = req.param("name")?.parse()?;
+        let state = &req.state().lock().unwrap();
+        let mut config = state.config.lock().unwrap();
+        let value = config.messages.remove(&name);
+
+        let body = Body::from_json(&value)?;
+        res.set_body(body);
+        Ok(res)
+    }
+
 }

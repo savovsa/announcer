@@ -51,7 +51,7 @@ fn save_config_to_file() {
 }
 
 #[async_std::test]
-async fn plays_massage_if_it_exists_in_configuration() {
+async fn plays_message_if_it_exists_in_configuration() {
     let sound_name = "soft-bells.mp3";
     let audio_folder = PathBuf::from("sounds");
 
@@ -88,7 +88,7 @@ async fn plays_massage_if_it_exists_in_configuration() {
 }
 
 #[async_std::test]
-async fn does_not_play_massage_if_its_not_in_the_configuration() {
+async fn does_not_play_message_if_its_not_in_the_configuration() {
     let config = Config {
         audio_folder_path: "sounds/".to_string(),
         messages: [(
@@ -112,4 +112,74 @@ async fn does_not_play_massage_if_its_not_in_the_configuration() {
     let res: Response = app_with_state.app.respond(req).await.unwrap();
 
     assert_eq!(res.status(), 404);
+}
+
+#[async_std::test]
+async fn delete_message_from_config() {
+    let message = Message {
+        display_name: "Sound 2".to_string(),
+        volume: 60_f32,
+    };
+
+    let config = Config {
+        audio_folder_path: "sounds/".to_string(),
+        messages: [(
+            "sound2.mp3".to_string(),
+            message.clone(),
+        )]
+        .iter()
+        .cloned()
+        .collect(),
+    };
+
+    let app_with_state = announcer::create_app(Some(config), None).unwrap();
+
+    let req = Request::new(
+        Method::Delete,
+        Url::parse("https://example.com/message/sound2.mp3").unwrap(),
+    );
+    let mut res: Response = app_with_state.app.respond(req).await.unwrap();
+
+    assert_eq!(res.status(), 200);
+
+    let body: Message = res.body_json().await.unwrap();
+    k9::assert_equal!(body, message);
+    
+
+    let req = Request::new(
+        Method::Get,
+        Url::parse("https://example.com/message/sound2.mp3").unwrap(),
+    );
+    let mut res: Response = app_with_state.app.respond(req).await.unwrap();
+    let message: Option<Message> = res.body_json().await.unwrap();
+    
+    k9::assert_equal!(message, None);
+}
+
+#[async_std::test]
+async fn delete_message_audio_file() {
+    let sound_name = "soft-bells.mp3";
+    let audio_folder = PathBuf::from("sounds");
+
+    // Temporarily copy an audio file in the sounds folder,
+    // because the play endpoint expects to be load a file.
+    let new_audio_file = audio_folder.join(sound_name);
+    let existing_audio_file = PathBuf::from("tests").join(sound_name);
+    std::fs::copy(existing_audio_file, &new_audio_file).unwrap();
+        
+    let app_with_state = announcer::create_app(None, None).unwrap();
+
+    let req = Request::new(
+        Method::Delete,
+        Url::parse("https://example.com/message/soft-bells.mp3").unwrap(),
+    );
+    let mut res: Response = app_with_state.app.respond(req).await.unwrap();
+
+    let file_exists = std::fs::metadata(&new_audio_file).is_ok();
+
+    if file_exists {
+        std::fs::remove_file(new_audio_file).unwrap();
+    }
+
+    assert!(!file_exists);
 }

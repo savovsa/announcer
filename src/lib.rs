@@ -53,9 +53,11 @@ pub fn create_app(
 
     app.at("/messages").get(get_messages);
     app.at("/message/:name").get(get_message);
+    app.at("/message/:name").delete(delete_message);
+
     app.at("/upload/:name").put(upload);
     app.at("/play/:name").get(play_message);
-
+    
     Ok(AppWithState {
         app,
         state: cloned_state,
