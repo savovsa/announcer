@@ -107,4 +107,23 @@ pub mod endpoints {
         let res = Response::new(200);
         Ok(res)
     }
+
+    pub async fn delete_message(req: Request) -> tide::Result {
+        let name: String = req.param("name")?.parse()?;
+        let state = &req.state().lock().unwrap();
+        let mut config = state.config.lock().unwrap();
+        let value = config.messages.remove(&name);
+        
+        let body = Body::from_json(&value)?;
+        let path = PathBuf::from(&config.audio_folder_path).join(name);
+        
+        let file_exists = std::fs::metadata(path.clone()).is_ok();
+        if file_exists {
+            std::fs::remove_file(path)?;
+        }
+        
+        let mut res = Response::new(200);
+        res.set_body(body);
+        Ok(res)
+    }
 }
